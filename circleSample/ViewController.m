@@ -32,6 +32,8 @@
     [btn addTarget:self action:@selector(btn_activity) forControlEvents:UIControlEventTouchUpInside];
     btn.backgroundColor = [UIColor redColor];
     [self.view addSubview:btn];
+    
+    [self loadingCircle];
 }
 
 - (void)didReceiveMemoryWarning {
