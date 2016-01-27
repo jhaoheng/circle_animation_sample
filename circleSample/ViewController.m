@@ -10,12 +10,15 @@
 
 @interface ViewController ()
 {
+    //circle
     UIImageView *circle;
     CAShapeLayer *arcLayer;
     UILabel *theLoadingNum;
     float forward_step;//每次動畫前進的範圍大小
-    float persistTime;
-    NSTimer *stepTime;
+    float forward_time;//每次前進的時間
+    float finishTime;//持續時間
+    float currentTime;//目前時間
+    NSTimer *circle_time;
 }
 
 @end
@@ -33,7 +36,10 @@
     btn.backgroundColor = [UIColor redColor];
     [self.view addSubview:btn];
     
-    [self loadingCircle];
+    
+    CGFloat circle_Origin_x = (CGRectGetWidth(self.view.frame) - 100)/2;
+    CGRect circleFrame = CGRectMake(circle_Origin_x, self.view.center.y-50, 100, 100);
+    [self initCircle:circleFrame andBaseOnView:self.view];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -43,18 +49,16 @@
 
 - (void)btn_activity
 {
-    [self circle_activity:Nil];
+    [self circle_start:Nil];
 }
 
-#pragma makr - 旋轉圖示
-#pragma mark - 百分比計數器
-- (void)loadingCircle
+#pragma mark - circle countdown
+- (void)initCircle:(CGRect)setFrame andBaseOnView:(UIView *)baseView
 {
-    circle = [[UIImageView alloc]initWithFrame:CGRectMake(0, 0, 100, 100)];
+    circle = [[UIImageView alloc]initWithFrame:setFrame];
     circle.backgroundColor = [UIColor clearColor];
     circle.alpha = 1;
-    circle.center = CGPointMake(160, 230);
-    [self.view addSubview:circle];
+    [baseView addSubview:circle];
     
     //
     UIGraphicsBeginImageContext(circle.frame.size);
@@ -77,7 +81,6 @@
     UIGraphicsEndImageContext();
     //
     
-    
     UIBezierPath *path=[UIBezierPath bezierPath];
     [path addArcWithCenter:CGPointMake(circle.bounds.size.width/2, circle.bounds.size.height/2) radius:circle.frame.size.height/2 startAngle:0 endAngle:2*M_PI clockwise:YES];
     arcLayer=[CAShapeLayer layer];
@@ -90,7 +93,7 @@
     //
     UILabel *theUnit = [[UILabel alloc]initWithFrame:CGRectMake(66, 36, 20, 12)];
     theUnit.backgroundColor = [UIColor clearColor];
-    theUnit.text = @"%";
+    theUnit.text = @"s";
     theUnit.textColor = [UIColor whiteColor];
     theUnit.textAlignment = NSTextAlignmentCenter;
     theUnit.font = [UIFont systemFontOfSize:12];
@@ -98,52 +101,103 @@
     
     theLoadingNum = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 50, 30)];
     theLoadingNum.backgroundColor = [UIColor clearColor];
-    theLoadingNum.text = @"0";
     theLoadingNum.textColor = [UIColor whiteColor];
     theLoadingNum.textAlignment = NSTextAlignmentRight;
     theLoadingNum.font = [UIFont systemFontOfSize:24];
     theLoadingNum.center = CGPointMake(45, 50);
     [circle addSubview:theLoadingNum];
+    
+    
+    //參數設定
+    [self circle_setting];
+    
+    [[NSNotificationCenter defaultCenter]
+     addObserver:self
+     selector:@selector(error_finish)
+     name:UIApplicationWillEnterForegroundNotification
+     object:nil];
+    
+    
+    
+    
+    
 }
 
+#pragma mark 每次前進的速度
 - (void)stepCount
 {
-    forward_step = forward_step + 10/persistTime;
-    //    NSLog(@"%f, %f",step,10/persistTime);
-    //    NSInteger tempStep = step;
-    theLoadingNum.text = [NSString stringWithFormat:@"%.0f",forward_step];
-    if (forward_step>=100) {
-        [stepTime invalidate];
+    currentTime = forward_step + currentTime;
+    theLoadingNum.text = [NSString stringWithFormat:@"%.f",finishTime - currentTime];
+    if (currentTime>=finishTime) {
+        [self circle_stop:nil];
     }
 }
 
-- (void)circle_activity:(id)sender
+#pragma mark 初始參數設定
+- (void)circle_setting
 {
-    
-    stepTime = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(stepCount) userInfo:nil repeats:YES];
-    forward_step = 0.0;
-    
-    //穩定訊號(pendingToGetSignalTime)＋取值(serialSignal_TimeInterval)＋鎖定環境時間(6)
-    persistTime = 21.0;
-    
+    //持續時間
+    finishTime = 15.0;
+    theLoadingNum.text = [NSString stringWithFormat:@"%.f",finishTime];
+    //每次前進速度
+    forward_step = 1.0;
+    //前進一次於幾秒內
+    forward_time = 1.0;
+    //目前時間
+    currentTime = 0.0;
+}
+
+#pragma mark 啟動
+- (void)circle_start:(id)sender
+{
+    circle_time = [NSTimer scheduledTimerWithTimeInterval:forward_time target:self selector:@selector(stepCount) userInfo:nil repeats:YES];
     arcLayer.strokeColor=[UIColor colorWithRed:0 green:1 blue:1 alpha:0.7].CGColor;
     [self drawLineAnimation:arcLayer];
 }
 
--(void)drawLineAnimation:(CALayer*)layer
+- (void)circle_stop:(id)sender
+{
+    [self circle_setting];
+    [circle_time invalidate];
+}
+
+- (void)drawLineAnimation:(CALayer*)layer
 {
     CABasicAnimation *bas=[CABasicAnimation animationWithKeyPath:@"strokeEnd"];
-    [bas setValue:@"camera" forKey:@"animation_circle"];
-    bas.duration=persistTime;
+    [bas setValue:@"time" forKey:@"animation_circle"];
+    bas.duration=finishTime;
     bas.delegate=self;
     bas.fromValue=[NSNumber numberWithInteger:0];
     bas.toValue=[NSNumber numberWithInteger:1];
     [layer addAnimation:bas forKey:@"key"];
 }
 
+#pragma mark 結束
 - (void)animationDidStop:(CAAnimation *)theAnimation finished:(BOOL)flag
 {
-    NSLog(@"finish");
+    NSLog(@"time finish");
+    [self circle_stop:nil];
+}
+
+#pragma mark 意外結束再開啟
+- (void)error_finish
+{
+    [self circle_stop:nil];
+    
+    if ([[UIDevice currentDevice].systemVersion floatValue] >= 8.0) {
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Error" message:@"請重新執行動態密碼" preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault
+                                                              handler:^(UIAlertAction * action) {}];
+        
+        [alertController addAction:defaultAction];
+        
+        [[UIApplication sharedApplication].keyWindow.rootViewController.presentedViewController presentViewController:alertController animated:YES completion:^{}];
+    }
+    else
+    {
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Error" message:@"請重新執行動態密碼" delegate:nil cancelButtonTitle:@"ok" otherButtonTitles:nil];
+        [alert show];
+    }
 }
 
 @end

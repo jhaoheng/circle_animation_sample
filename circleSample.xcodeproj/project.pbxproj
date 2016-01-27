@@ -340,6 +340,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = circleSample/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.idgate.-.circleSample";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -351,6 +352,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = circleSample/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.idgate.-.circleSample";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -400,6 +402,7 @@
 				E50873691C57013700A6EC90 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		E508736A1C57013700A6EC90 /* Build configuration list for PBXNativeTarget "circleSampleTests" */ = {
 			isa = XCConfigurationList;
@@ -408,6 +411,7 @@
 				E508736C1C57013700A6EC90 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
